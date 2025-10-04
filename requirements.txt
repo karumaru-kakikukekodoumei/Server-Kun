@@ -1,0 +1,6 @@
+discord.py
+tensorflow
+transformers
+python-dotenv
+pandas
+scikit-learn
