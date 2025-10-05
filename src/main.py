@@ -16,11 +16,16 @@ def check_and_install_dependencies():
     Checks if required packages from requirements.txt are installed.
     If not, it attempts to install them.
     """
+    # Correctly locate requirements.txt in the project root, relative to this script's location.
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    requirements_path = os.path.join(project_root, 'requirements.txt')
+
     try:
-        with open('requirements.txt', 'r', encoding='utf-8') as f:
+        with open(requirements_path, 'r', encoding='utf-8') as f:
             requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
     except FileNotFoundError:
-        print("[ERROR] requirements.txt not found. Please ensure it's in the project's root directory.")
+        print(f"[ERROR] requirements.txt not found. Looked for it at: {requirements_path}")
         sys.exit(1)
 
     print("Checking for required packages...")
@@ -29,16 +34,16 @@ def check_and_install_dependencies():
         print("All required packages are already installed.")
     except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict) as e:
         print(f"[WARNING] A package is missing or has a version conflict: {e}")
-        print("Attempting to install/update packages from requirements.txt...")
+        print(f"Attempting to install/update packages from {requirements_path}...")
         try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", requirements_path])
             print("\nPackages installed successfully.")
             print("Please restart the application for the changes to take effect.")
             sys.exit(0)
         except subprocess.CalledProcessError as install_error:
             print(f"\n[ERROR] Failed to install packages: {install_error}")
             print("Please try running the following command manually in your terminal:")
-            print("    pip install -r requirements.txt")
+            print(f"    pip install -r {requirements_path}")
             sys.exit(1)
 
 # --- End of Dependency Checker ---
