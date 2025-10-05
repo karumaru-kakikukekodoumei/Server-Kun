@@ -3,6 +3,47 @@ import sys
 import asyncio
 from dotenv import load_dotenv
 
+# --- Dependency Checker ---
+import subprocess
+try:
+    import pkg_resources
+except ImportError:
+    print("[ERROR] Package 'setuptools' is not installed. Please install it using: pip install setuptools")
+    sys.exit(1)
+
+def check_and_install_dependencies():
+    """
+    Checks if required packages from requirements.txt are installed.
+    If not, it attempts to install them.
+    """
+    try:
+        with open('requirements.txt', 'r', encoding='utf-8') as f:
+            requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    except FileNotFoundError:
+        print("[ERROR] requirements.txt not found. Please ensure it's in the project's root directory.")
+        sys.exit(1)
+
+    print("Checking for required packages...")
+    try:
+        pkg_resources.require(requirements)
+        print("All required packages are already installed.")
+    except (pkg_resources.DistributionNotFound, pkg_resources.VersionConflict) as e:
+        print(f"[WARNING] A package is missing or has a version conflict: {e}")
+        print("Attempting to install/update packages from requirements.txt...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+            print("\nPackages installed successfully.")
+            print("Please restart the application for the changes to take effect.")
+            sys.exit(0)
+        except subprocess.CalledProcessError as install_error:
+            print(f"\n[ERROR] Failed to install packages: {install_error}")
+            print("Please try running the following command manually in your terminal:")
+            print("    pip install -r requirements.txt")
+            sys.exit(1)
+
+# --- End of Dependency Checker ---
+
+
 from bot import AIKunBot
 from learning import AILearner
 
@@ -25,12 +66,16 @@ def main():
     """
     メイン関数
     """
+    # 引数がない場合は、依存関係のチェックだけ実行して終了する
+    if len(sys.argv) < 2:
+        check_and_install_dependencies()
+        print("\nDependency check complete. Please provide a command to continue.")
+        print("Usage: python src/main.py [run|research|learning]")
+        return
+
+    check_and_install_dependencies()
     load_dotenv()
     token = os.getenv("DISCORD_BOT_TOKEN")
-
-    if len(sys.argv) < 2:
-        print("Usage: python main.py [run|research|learning]")
-        return
 
     command = sys.argv[1]
 
@@ -57,7 +102,7 @@ def main():
         print("Learning finished. You can now run the bot using the 'run' command.")
     else:
         print(f"Unknown command: {command}")
-        print("Usage: python main.py [run|research|learning]")
+        print("Usage: python src/main.py [run|research|learning]")
 
 
 if __name__ == "__main__":
