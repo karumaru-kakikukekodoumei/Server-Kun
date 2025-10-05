@@ -7,12 +7,25 @@ class AILearner:
     """
     AIの学習とモデル管理を行うクラス
     """
-    def __init__(self, model_name="rinna/japanese-gpt2-small", model_dir="models"):
-        self.model_name = model_name
+    def __init__(self, model_dir="models"):
         self.model_dir = model_dir
         self.model_path = os.path.join(self.model_dir, "fine_tuned")
+
+        wikipedia_base_model_path = "models/wikipedia_base"
+        rinna_model_name = "rinna/japanese-gpt2-small"
+
+        # Check if the custom base model exists and use it
+        if os.path.exists(os.path.join(wikipedia_base_model_path, "tf_model.h5")):
+            print(f"Found custom base model at {wikipedia_base_model_path}. This will be used as the base for fine-tuning.")
+            self.model_name = wikipedia_base_model_path
+        else:
+            print(f"Custom base model not found. Falling back to the default model: {rinna_model_name}.")
+            print("It is recommended to run the Wikipedia pre-training script first for better performance.")
+            self.model_name = rinna_model_name
+
         self.model = None
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        print(f"Initializing tokenizer from {self.model_name}...")
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         # Add a padding token if it doesn't exist
         if self.tokenizer.pad_token is None:
             self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
